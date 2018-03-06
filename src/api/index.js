@@ -7,7 +7,7 @@ const router = express.Router();
 import playlist from './playlist';
 
 const { CORS_WHITELIST } = process.env;
-const whitelist = CORS_WHITELIST && CORS_WHITELIST !== '' ? CORS_WHITELIST : [];
+const whitelist = CORS_WHITELIST && CORS_WHITELIST !== '' ? CORS_WHITELIST.split(',') : [];
 
 const corsOptions = {
     origin: (origin, callback) => {
