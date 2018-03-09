@@ -23,12 +23,13 @@ const requestTop100Playlist = () => {
             if (err) {
                 return reject(err);
             }
+            const savetime = new Date().getTime();
             const playlists = JSON.parse(body);
             let item;
             if (playlists.items && playlists.items.length > 0) {
                 item = playlists.items[0];
             }
-            fs.writeFileSync(playlistPath, JSON.stringify(playlists, null, '\t'), 'utf-8');
+            fs.writeFileSync(playlistPath, JSON.stringify({ savetime, playlists }, null, '\t'), 'utf-8');
             return resolve(item);
         });
     });
@@ -68,7 +69,25 @@ const requestPlaylistItems = (item) => {
     });
 };
 
+const fetchedToday = () => {
+    const playlist = fs.existsSync(playlistPath) && JSON.parse(fs.readFileSync(playlistPath, 'utf-8'));
+    if (playlist) {
+        const saveTime = playlist.savetime;
+        const savedDate = new Date(saveTime);
+        const currentDate = new Date();
+        if (savedDate.getFullYear() === currentDate.getFullYear() &&
+            savedDate.getMonth() === currentDate.getMonth() &&
+            savedDate.getDate() === currentDate.getDate()) {
+            return true;
+        }
+    }
+    return false;
+};
+
 const transaction = () => {
+    if (fetchedToday()) {
+        return;
+    }
     requestTop100Playlist()
     .then(requestPlaylistItems)
     .then((items) => {
