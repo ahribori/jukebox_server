@@ -14,6 +14,37 @@ const CronJob = cron.CronJob;
 const KEY = process.env.YOUTUBE_KEY;
 const SEARCH = process.env.YOUTUBE_SEARCH;
 
+const convertYoutubeTimeFormatToSecond = (duration) => {
+    let a = duration.match(/\d+/g);
+
+    if (duration.indexOf('M') >= 0 && duration.indexOf('H') === -1 && duration.indexOf('S') === -1) {
+        a = [0, a[0], 0];
+    }
+    if (duration.indexOf('H') >= 0 && duration.indexOf('M') === -1) {
+        a = [a[0], 0, a[1]];
+    }
+    if (duration.indexOf('H') >= 0 && duration.indexOf('M') === -1 && duration.indexOf('S') === -1) {
+        a = [a[0], 0, 0];
+    }
+
+    duration = 0;
+
+    if (a.length === 3) {
+        duration = duration + parseInt(a[0]) * 3600;
+        duration = duration + parseInt(a[1]) * 60;
+        duration = duration + parseInt(a[2]);
+    }
+    if (a.length === 2) {
+        duration = duration + parseInt(a[0]) * 60;
+        duration = duration + parseInt(a[1]);
+    }
+    if (a.length === 1) {
+        duration = duration + parseInt(a[0]);
+    }
+
+    return duration;
+};
+
 const requestTop100Playlist = () => {
     if (!KEY || !SEARCH || KEY === '' || SEARCH === '') {
         return Promise.reject(new Error('YOUTUBE_KEY and YOUTUBE_SEARCH are required'));
@@ -64,8 +95,28 @@ const requestPlaylistItems = (item) => {
                 if (playlistItems.nextPageToken) {
                     return fetch(playlistItems.nextPageToken);
                 }
-                fs.writeFileSync(playlistItemsPath, JSON.stringify(items, null, '\t'), 'utf-8');
-                return resolve(items);
+
+                // 첫번 째 곡이 대문용인지 확인
+                if (items.length > 0) {
+                    const { videoId } = items[0].snippet.resourceId;
+                    const q2 = `https://www.googleapis.com/youtube/v3/videos?key=${KEY}&part=id,contentDetails&id=${videoId}`;
+                    console.log(q2);
+                    request(q2, (err, response, body) => {
+                        if (err) {
+                            return reject(err);
+                        }
+                        const { duration } = JSON.parse(body).items[0].contentDetails;
+                        const durationSecond = convertYoutubeTimeFormatToSecond(duration);
+
+                        if (durationSecond < 30) {
+                            // 동영상 길이가 30초보다 작으면 목록에서 제거
+                            items.shift();
+                        }
+
+                        fs.writeFileSync(playlistItemsPath, JSON.stringify(items, null, '\t'), 'utf-8');
+                        return resolve(items);
+                    });
+                }
             });
         };
         fetch();
