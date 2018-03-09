@@ -12,12 +12,15 @@ fs.existsSync(dataDirPath) || fs.mkdirSync(dataDirPath);
 const CronJob = cron.CronJob;
 
 const KEY = process.env.YOUTUBE_KEY;
-const SEARCH = process.env.YOUTUBE_SEARCH || '멜론 top 100';
+const SEARCH = process.env.YOUTUBE_SEARCH;
 
 const requestTop100Playlist = () => {
+    if (!KEY || !SEARCH || KEY === '' || SEARCH === '') {
+        return Promise.reject(new Error('YOUTUBE_KEY and YOUTUBE_SEARCH are required'));
+    }
     const q = encodeURIComponent(SEARCH);
     const query = `https://www.googleapis.com/youtube/v3/search?key=${KEY}&part=id&type=playlist&q=${q}`;
-    console.log(query)
+    console.log(query);
     return new Promise((resolve, reject) => {
         request(query, (err, response, body) => {
             if (err) {
@@ -89,10 +92,13 @@ const transaction = () => {
         return;
     }
     requestTop100Playlist()
-    .then(requestPlaylistItems)
-    .then((items) => {
-        console.log(items.length);
-    });
+        .then(requestPlaylistItems)
+        .then((items) => {
+            console.log(items.length);
+        })
+        .catch(e => {
+            console.log(e);
+        });
 };
 transaction();
 
