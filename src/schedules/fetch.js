@@ -131,7 +131,8 @@ const fetchedToday = () => {
         const currentDate = new Date();
         if (savedDate.getFullYear() === currentDate.getFullYear() &&
             savedDate.getMonth() === currentDate.getMonth() &&
-            savedDate.getDate() === currentDate.getDate()) {
+            savedDate.getDate() === currentDate.getDate() &&
+            savedDate.getHours() === currentDate.getHours()) {
             return true;
         }
     }
