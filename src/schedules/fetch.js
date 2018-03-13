@@ -153,7 +153,7 @@ const transaction = () => {
 };
 transaction();
 
-const job = new CronJob('0 0 0 * * *', () => {
+const job = new CronJob('0 0 * * * *', () => {
     transaction();
 });
 
