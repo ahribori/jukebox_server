@@ -8,7 +8,8 @@ const playlistItemsPath = path.join(dataDirPath, 'playlistItems.json');
 
 router.get('/', (req, res) => {
     if (fs.existsSync(playlistItemsPath)) {
-        return res.json(require(playlistItemsPath));
+        const playlist = fs.readFileSync(playlistItemsPath, 'utf-8');
+        return res.json(JSON.parse(playlist));
     }
     return res.json([]);
 });
